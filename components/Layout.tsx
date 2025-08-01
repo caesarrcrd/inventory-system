@@ -1,49 +1,31 @@
+// components/Layout.tsx
+import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import { ReactNode } from "react";
-import { Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@nextui-org/react";
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-export default function Layout({ children }: LayoutProps) {
-  const router = useRouter();
-  const menuItems = [
-    { href: "/", label: "Home" },
-    { href: "/products", label: "Products" },
-    { href: "/about", label: "About" },
-  ];
-
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Navbar */}
-      <Navbar className="shadow-md">
-        <NavbarBrand className="font-bold text-lg">Inventory System</NavbarBrand>
-        <NavbarContent justify="end">
-          {menuItems.map((item) => (
-            <NavbarItem key={item.href} isActive={router.pathname === item.href}>
-              <Link
-                href={item.href}
-                className={`px-3 py-1 rounded-md ${
-                  router.pathname === item.href
-                    ? "bg-primary-100 text-primary"
-                    : "hover:text-primary"
-                }`}
-              >
-                {item.label}
-              </Link>
-            </NavbarItem>
-          ))}
-        </NavbarContent>
-      </Navbar>
+    <div className="min-h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-blue-600 text-white shadow-md">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+          <h1 className="text-lg font-semibold">Inventory System</h1>
+          <nav>
+            <Link href="/" className="mr-4 hover:underline">
+              Home
+            </Link>
+            <Link href="/products" className="hover:underline">
+              Products
+            </Link>
+          </nav>
+        </div>
+      </header>
 
-      {/* Content */}
-      <main className="flex-1 p-6">{children}</main>
+      {/* Main */}
+      <main className="max-w-5xl mx-auto px-4 py-6">{children}</main>
 
       {/* Footer */}
-      <footer className="bg-gray-100 text-center py-4 text-sm">
-        © {new Date().getFullYear()} Inventory System - All rights reserved
+      <footer className="bg-gray-800 text-gray-300 text-center py-3 mt-8">
+        <p>&copy; 2025 Inventory System</p>
       </footer>
     </div>
   );
