@@ -13,6 +13,8 @@ export default function RegisterPage() {
     setMessage("");
     setLoading(true);
 
+    console.log("DEBUG: Submit form dengan", { username, password });
+
     try {
       const res = await fetch("/api/register", {
         method: "POST",
@@ -20,15 +22,25 @@ export default function RegisterPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
+      console.log("DEBUG: Response status", res.status);
+
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        console.log("DEBUG: Tidak bisa parse JSON");
+      }
+
+      console.log("DEBUG: Data dari API", data);
 
       if (res.ok) {
-        setMessage("✅ Registrasi berhasil! Mengarahkan ke halaman login...");
+        setMessage("✅ Registrasi berhasil! Mengarahkan ke login...");
         setTimeout(() => router.push("/login"), 2000);
       } else {
         setMessage(`❌ ${data.message || "Gagal mendaftar"}`);
       }
     } catch (error) {
+      console.error("DEBUG: Error fetch", error);
       setMessage("⚠️ Tidak dapat terhubung ke server");
     } finally {
       setLoading(false);
@@ -63,7 +75,9 @@ export default function RegisterPage() {
           {loading ? "Mendaftar..." : "Daftar"}
         </button>
       </form>
-      {message && <p style={{ marginTop: "15px" }}>{message}</p>}
+      {message && (
+        <p style={{ marginTop: "15px", whiteSpace: "pre-wrap" }}>{message}</p>
+      )}
     </div>
   );
 }
