@@ -3,20 +3,22 @@ import pool from "../../lib/db";
 import bcrypt from "bcryptjs";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).end();
-  const { email, name, password } = req.body;
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method not allowed" });
+  }
 
-  const client = await pool.connect();
+  const { email, password } = req.body;
+
   try {
-    const check = await client.query("SELECT * FROM users WHERE email=$1", [email]);
-    if (check.rowCount > 0) {
-      return res.status(400).json({ message: "Email sudah terdaftar" });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
-    await client.query("INSERT INTO users (name, email, password) VALUES ($1, $2, $3)", [name, email, hashedPassword]);
-    res.status(201).json({ message: "User dibuat" });
-  } finally {
-    client.release();
+    const result = await pool.query(
+      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, email",
+      [email, hashedPassword]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong" });
   }
 }
