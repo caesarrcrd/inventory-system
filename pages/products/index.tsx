@@ -1,25 +1,10 @@
-// pages/products/index.tsx
+import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/router";
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-}
 
 export default function ProductsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-
-  useEffect(() => {
-    if (status === "unauthenticated") router.push("/");
-    if (status === "authenticated") fetchProducts();
-  }, [status]);
 
   const fetchProducts = async () => {
     const res = await fetch("/api/products");
@@ -27,78 +12,62 @@ export default function ProductsPage() {
     setProducts(data);
   };
 
-  const addProduct = async () => {
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const addProduct = async (e: any) => {
+    e.preventDefault();
     await fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, price: Number(price) }),
+      body: JSON.stringify({ name, price }),
     });
-    setName("");
-    setPrice("");
+    setName(""); setPrice("");
     fetchProducts();
   };
 
   const deleteProduct = async (id: number) => {
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
+    await fetch("/api/products", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
     fetchProducts();
   };
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Products</h1>
-      <button
-        onClick={() => signOut()}
-        className="bg-red-500 text-white px-3 py-1 rounded mb-4"
-      >
-        Logout
-      </button>
-
-      <div className="flex gap-2 mb-4">
-        <input
-          className="border p-2"
-          placeholder="Product name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="border p-2"
-          placeholder="Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
-        <button
-          onClick={addProduct}
-          className="bg-blue-500 text-white px-3 py-2 rounded"
-        >
-          Add
-        </button>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-2xl font-bold">Daftar Produk</h1>
+        <button onClick={() => signOut()} className="text-red-500">Keluar</button>
       </div>
-
+      <form onSubmit={addProduct} className="flex gap-2 mb-6">
+        <input type="text" placeholder="Nama produk" className="border p-2 rounded flex-1"
+          value={name} onChange={(e) => setName(e.target.value)} />
+        <input type="number" placeholder="Harga (Rp)" className="border p-2 rounded w-40"
+          value={price} onChange={(e) => setPrice(e.target.value)} />
+        <button className="bg-blue-600 text-white px-4 rounded">Tambah</button>
+      </form>
       <table className="w-full border">
         <thead>
-          <tr className="bg-gray-200">
-            <th className="p-2 border">ID</th>
-            <th className="p-2 border">Name</th>
-            <th className="p-2 border">Price</th>
-            <th className="p-2 border">Actions</th>
+          <tr className="bg-gray-200 text-left">
+            <th className="p-2 border">Nama</th>
+            <th className="p-2 border">Harga (Rp)</th>
+            <th className="p-2 border">Aksi</th>
           </tr>
         </thead>
         <tbody>
           {products.map((p) => (
             <tr key={p.id}>
-              <td className="p-2 border">{p.id}</td>
               <td className="p-2 border">{p.name}</td>
-              <td className="p-2 border">${p.price}</td>
+              <td className="p-2 border">{parseInt(p.price).toLocaleString("id-ID")}</td>
               <td className="p-2 border">
-                <button
-                  onClick={() => deleteProduct(p.id)}
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                >
-                  Delete
-                </button>
+                <button onClick={() => deleteProduct(p.id)} className="text-red-600">Hapus</button>
               </td>
             </tr>
           ))}
+          {products.length === 0 && <tr><td colSpan={3} className="p-2 text-center">Belum ada produk</td></tr>}
         </tbody>
       </table>
     </div>
