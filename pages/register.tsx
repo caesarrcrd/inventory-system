@@ -5,11 +5,13 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
+    setLoading(true);
 
     try {
       const res = await fetch("/api/register", {
@@ -19,19 +21,22 @@ export default function RegisterPage() {
       });
 
       const data = await res.json();
+
       if (res.ok) {
-        setMessage("Registrasi berhasil! Mengarahkan ke halaman login...");
-        setTimeout(() => router.push("/login"), 1500);
+        setMessage("✅ Registrasi berhasil! Mengarahkan ke halaman login...");
+        setTimeout(() => router.push("/login"), 2000);
       } else {
-        setMessage(data.message || "Gagal mendaftar");
+        setMessage(`❌ ${data.message || "Gagal mendaftar"}`);
       }
     } catch (error) {
-      setMessage("Terjadi kesalahan koneksi");
+      setMessage("⚠️ Tidak dapat terhubung ke server");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container">
+    <div style={{ maxWidth: "400px", margin: "50px auto" }}>
       <h1>Register</h1>
       <form onSubmit={handleRegister}>
         <input
@@ -40,6 +45,7 @@ export default function RegisterPage() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
+          style={{ display: "block", margin: "10px 0", width: "100%" }}
         />
         <input
           type="password"
@@ -47,10 +53,17 @@ export default function RegisterPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          style={{ display: "block", margin: "10px 0", width: "100%" }}
         />
-        <button type="submit">Daftar</button>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ marginTop: "10px", width: "100%" }}
+        >
+          {loading ? "Mendaftar..." : "Daftar"}
+        </button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p style={{ marginTop: "15px" }}>{message}</p>}
     </div>
   );
 }
