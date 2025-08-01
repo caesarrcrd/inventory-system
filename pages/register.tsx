@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { pool } from "../lib/db";
+import pool from "../lib/db";
 import bcrypt from "bcryptjs";
 import { useRouter } from "next/router";
 
