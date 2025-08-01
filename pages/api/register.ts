@@ -3,31 +3,23 @@ import bcrypt from "bcryptjs";
 import pool from "../../lib/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username dan password wajib diisi" });
-  }
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const userCheck = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-    if (userCheck.rows.length > 0) {
-      return res.status(400).json({ message: "Username sudah terdaftar" });
-    }
+    const { name, email, password } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [
-      username,
-      hashedPassword,
-    ]);
+    if (!name || !email || !password) return res.status(400).json({ error: "Lengkapi semua field" });
 
-    return res.status(201).json({ message: "Registrasi berhasil" });
-  } catch (error) {
-    console.error("REGISTER ERROR:", error);
-    return res.status(500).json({ message: "Terjadi kesalahan server" });
+    const hashed = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      "INSERT INTO users (name, email, password) VALUES ($1,$2,$3) RETURNING id",
+      [name, email, hashed]
+    );
+
+    return res.status(200).json({ success: true, userId: result.rows[0].id });
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: "Gagal register" });
   }
 }

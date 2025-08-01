@@ -1,53 +1,44 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 
-export default function Register() {
-  const router = useRouter();
-  const [username, setUsername] = useState("");
+export default function RegisterPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [msg, setMsg] = useState("");
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    setMessage("");
-
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await res.json();
-    setMessage(data.message);
-
-    if (res.ok) {
-      setTimeout(() => router.push("/login"), 1000);
+    setMsg("Proses...");
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsg("Berhasil daftar, silakan login");
+        setTimeout(() => router.push("/login"), 1000);
+      } else {
+        setMsg(data.error || "Gagal daftar");
+      }
+    } catch {
+      setMsg("Terjadi error");
     }
-  };
+  }
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto", padding: "2rem" }}>
+    <div>
       <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-          style={{ display: "block", marginBottom: "1rem", width: "100%" }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ display: "block", marginBottom: "1rem", width: "100%" }}
-        />
+      <form onSubmit={handleRegister}>
+        <input placeholder="Nama" value={name} onChange={(e) => setName(e.target.value)} /><br />
+        <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} /><br />
+        <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} /><br />
         <button type="submit">Daftar</button>
       </form>
-      {message && <p>{message}</p>}
+      <p>{msg}</p>
     </div>
   );
 }
