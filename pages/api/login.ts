@@ -1,36 +1,41 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import pool from "../../lib/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import pool from "../../lib/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const { email, password } = req.body;
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: "Username dan password wajib diisi" });
+  }
 
   try {
-    const userResult = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-
-    if (userResult.rows.length === 0) {
-      return res.status(401).json({ error: "User not found" });
+    const userQuery = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    if (userQuery.rows.length === 0) {
+      return res.status(400).json({ message: "User tidak ditemukan" });
     }
 
-    const user = userResult.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
+    const user = userQuery.rows[0];
+    const match = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials" });
+    if (!match) {
+      return res.status(401).json({ message: "Password salah" });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET!, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1d" }
+    );
 
-    res.status(200).json({ token, user: { id: user.id, email: user.email } });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong" });
+    return res.status(200).json({ token, message: "Login berhasil" });
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    return res.status(500).json({ message: "Terjadi kesalahan server" });
   }
 }
